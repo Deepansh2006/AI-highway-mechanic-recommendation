@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.env
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Logs and Local Outputs
+*.log
+lt.txt
+
+# Antigravity/Agent Artifacts & Scratchpads
+whateverDone.txt
+implementation_plan*.md
+walkthrough*.md
+task.md
+scratch/
+
+# Testing and Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Personal Study & Data
+documentations/
+*.xlsx

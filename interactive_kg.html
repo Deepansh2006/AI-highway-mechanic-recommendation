@@ -1,0 +1,755 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/css/tom-select.min.css" integrity="sha512-43fHB3GLgZfz8QXl1RPQ8O66oIgv3po9cJ5erMt1c4QISq9dYb195T3vr5ImnJPXuVroKcGBPXBFKETW8jrPNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/js/tom-select.complete.js" integrity="sha512-jeF9CfnvzDiw9G9xiksVjxR2lib44Gnovvkv+3CgCG6NXCD4gqlA5nDAVW5WjpA+i+/zKsUWV5xNEbW1X/HH0Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 800px;
+                 background-color: #222222;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+                <div id="select-menu" class="card-header">
+                    <div class="row no-gutters">
+                        <div class="col-10 pb-2">
+                            <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="selectNode([value]);"
+                            id="select-node"
+                            placeholder="Select node..."
+                            >
+                                <option selected>Select a Node by ID</option>
+                                
+                                    <option value="Auto Fix Point">Auto Fix Point</option>
+                                
+                                    <option value="Car repair">Car repair</option>
+                                
+                                    <option value="car wash">car wash</option>
+                                
+                                    <option value="A.K Car Care">A.K Car Care</option>
+                                
+                                    <option value="Shivam Motors Repair and Service Center">Shivam Motors Repair and Service Center</option>
+                                
+                                    <option value="Bhawani Motors">Bhawani Motors</option>
+                                
+                                    <option value="Osho Car Service">Osho Car Service</option>
+                                
+                                    <option value="Shri Ram Auto Service Centre">Shri Ram Auto Service Centre</option>
+                                
+                                    <option value="Car Care Technologies">Car Care Technologies</option>
+                                
+                                    <option value="AUTOWAYS Multi Car Workshop">AUTOWAYS Multi Car Workshop</option>
+                                
+                                    <option value="GaadiMech - Officer Campus Jagatpura">GaadiMech - Officer Campus Jagatpura</option>
+                                
+                                    <option value="auto detailing">auto detailing</option>
+                                
+                                    <option value="AC repair (franchise)">AC repair (franchise)</option>
+                                
+                                    <option value="Kushi Auto Workshop">Kushi Auto Workshop</option>
+                                
+                                    <option value="Yash Auto Garage & Workshop">Yash Auto Garage & Workshop</option>
+                                
+                                    <option value="parking">parking</option>
+                                
+                                    <option value="garage">garage</option>
+                                
+                                    <option value="Karan Motor Garage">Karan Motor Garage</option>
+                                
+                                    <option value="Go Garage Jagatpura">Go Garage Jagatpura</option>
+                                
+                                    <option value="Two-wheeler repair">Two-wheeler repair</option>
+                                
+                                    <option value="service">service</option>
+                                
+                                    <option value="Jaipur Motor Garage">Jaipur Motor Garage</option>
+                                
+                                    <option value="Shree Om Motors">Shree Om Motors</option>
+                                
+                                    <option value="auto parts store">auto parts store</option>
+                                
+                                    <option value="CARS CARE24 (Vaishali Nagar)">CARS CARE24 (Vaishali Nagar)</option>
+                                
+                                    <option value="Automatic car wash and repair">Automatic car wash and repair</option>
+                                
+                                    <option value="Shree Shyam Automobile">Shree Shyam Automobile</option>
+                                
+                                    <option value="Dev Automotives">Dev Automotives</option>
+                                
+                                    <option value="Car wash">Car wash</option>
+                                
+                                    <option value="car repair">car repair</option>
+                                
+                                    <option value="insurance agency">insurance agency</option>
+                                
+                                    <option value="ATHARVA MOTORS CAR WORKSHOP">ATHARVA MOTORS CAR WORKSHOP</option>
+                                
+                                    <option value="CARS CARE24 (Malviya Nagar)">CARS CARE24 (Malviya Nagar)</option>
+                                
+                                    <option value="DS Motors">DS Motors</option>
+                                
+                                    <option value="car dealer">car dealer</option>
+                                
+                                    <option value="Chiranji Auto Service">Chiranji Auto Service</option>
+                                
+                                    <option value="Dinesh Auto Service">Dinesh Auto Service</option>
+                                
+                                    <option value="Car">Car</option>
+                                
+                                    <option value="bike repair">bike repair</option>
+                                
+                                    <option value="Auto Repair Services">Auto Repair Services</option>
+                                
+                                    <option value="transportation service">transportation service</option>
+                                
+                                    <option value="Azad Car Repair Workshop">Azad Car Repair Workshop</option>
+                                
+                                    <option value="Sunil Motor Garage">Sunil Motor Garage</option>
+                                
+                                    <option value="GoMechanic (Panch Batti)">GoMechanic (Panch Batti)</option>
+                                
+                                    <option value="car repair (franchise)">car repair (franchise)</option>
+                                
+                                    <option value="Ghani Autos Since 1927">Ghani Autos Since 1927</option>
+                                
+                                    <option value="GoMechanic (Link Road)">GoMechanic (Link Road)</option>
+                                
+                                    <option value="car dealer (franchise)">car dealer (franchise)</option>
+                                
+                                    <option value="Shiv Kripa Automobiles">Shiv Kripa Automobiles</option>
+                                
+                                    <option value="denting">denting</option>
+                                
+                                    <option value="painting">painting</option>
+                                
+                                    <option value="wash">wash</option>
+                                
+                                    <option value="Roadside Assist 24x7 Mechanic on the Way">Roadside Assist 24x7 Mechanic on the Way</option>
+                                
+                                    <option value="Roadside assistance">Roadside assistance</option>
+                                
+                                    <option value="mobile mechanic">mobile mechanic</option>
+                                
+                                    <option value="Jaipur Car Care">Jaipur Car Care</option>
+                                
+                                    <option value="The Car Shop">The Car Shop</option>
+                                
+                                    <option value="Car repair (luxury brand specialist)">Car repair (luxury brand specialist)</option>
+                                
+                                    <option value="Car Clinic">Car Clinic</option>
+                                
+                                    <option value="RK Car Repairing">RK Car Repairing</option>
+                                
+                                    <option value="GaadiMech - Vidhyadhar Nagar">GaadiMech - Vidhyadhar Nagar</option>
+                                
+                                    <option value="Go Garage Vidyadhar Nagar">Go Garage Vidyadhar Nagar</option>
+                                
+                                    <option value="Bike repair">Bike repair</option>
+                                
+                                    <option value="Raju Motors Garage">Raju Motors Garage</option>
+                                
+                                    <option value="Expert Auto">Expert Auto</option>
+                                
+                                    <option value="tyres">tyres</option>
+                                
+                                    <option value="battery">battery</option>
+                                
+                                    <option value="Rudranshhi Automobiles And Service Centre">Rudranshhi Automobiles And Service Centre</option>
+                                
+                                    <option value="Tire shop">Tire shop</option>
+                                
+                                    <option value="auto parts">auto parts</option>
+                                
+                                    <option value="Shyam Motors">Shyam Motors</option>
+                                
+                                    <option value="Indian Car Service Centre">Indian Car Service Centre</option>
+                                
+                                    <option value="Jyoti Auto Mobile & Service Centre">Jyoti Auto Mobile & Service Centre</option>
+                                
+                                    <option value="Car repair (Toyota specialist)">Car repair (Toyota specialist)</option>
+                                
+                                    <option value="Shree Raghav Automotives">Shree Raghav Automotives</option>
+                                
+                                    <option value="Auto parts">Auto parts</option>
+                                
+                                    <option value="The Bike Garage">The Bike Garage</option>
+                                
+                                    <option value="Bike repair (custom work)">Bike repair (custom work)</option>
+                                
+                                    <option value="TotalEnergies Quartz Auto Services (Shree Shyam Automobile)">TotalEnergies Quartz Auto Services (Shree Shyam Automobile)</option>
+                                
+                                    <option value="ShreeBalaji CarCare Workshop">ShreeBalaji CarCare Workshop</option>
+                                
+                                    <option value="laundry">laundry</option>
+                                
+                                    <option value="GaadiMech - Tonk Road">GaadiMech - Tonk Road</option>
+                                
+                                    <option value="Pink City Auto Cars">Pink City Auto Cars</option>
+                                
+                                    <option value="CARS CARE24 (Tonk Road)">CARS CARE24 (Tonk Road)</option>
+                                
+                                    <option value="Go Garage Sitapura">Go Garage Sitapura</option>
+                                
+                                    <option value="Autolife Workshoppers Pvt Ltd">Autolife Workshoppers Pvt Ltd</option>
+                                
+                                    <option value="Car repair (multi-brand">Car repair (multi-brand</option>
+                                
+                                    <option value="German cars)">German cars)</option>
+                                
+                                    <option value="MD Motors">MD Motors</option>
+                                
+                                    <option value="chauffeur service">chauffeur service</option>
+                                
+                                    <option value="GoMechanic - New Alpha Automobiles">GoMechanic - New Alpha Automobiles</option>
+                                
+                                    <option value="Hari Om Cars And Care">Hari Om Cars And Care</option>
+                                
+                                    <option value="Raj Motors">Raj Motors</option>
+                                
+                                    <option value="Car Repair Service">Car Repair Service</option>
+                                
+                                    <option value="GoMechanic - Car Battery Shop">GoMechanic - Car Battery Shop</option>
+                                
+                                    <option value="battery shop (franchise)">battery shop (franchise)</option>
+                                
+                                    <option value="Jabalpur">Jabalpur</option>
+                                
+                                    <option value="Mr. Mechanic Car Workshop">Mr. Mechanic Car Workshop</option>
+                                
+                            </select>
+                        </div>
+                        <div class="col-2 pb-2">
+                            <button type="button" class="btn btn-primary btn-block" onclick="neighbourhoodHighlight({nodes: []});">Reset Selection</button>
+                        </div>
+                    </div>
+                </div>
+            
+            
+              <div id="filter-menu" class="card-header">
+                <div class="row no-gutters">
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="updateFilter(value, 'item')"
+                            id="select-item"
+                        >
+                        <option value="">Select a network item</option>
+                        <option value="edge">edge</option>
+                        <option value="node">node</option>
+                    </select>
+                  </div>
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="updateFilter(value, 'property')"
+                            id="select-property"
+                        >
+                        <option value="">Select a property...</option>
+                    </select>
+                  </div>
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            id="select-value"
+                        >
+                        <option value="">Select value(s)...</option>
+                    </select>
+                  </div>
+                  <div class="col-1 pb-2">
+                    <button type="button" class="btn btn-primary btn-block" onclick="highlightFilter(filter);">Filter</button>
+                  </div>
+                  <div class="col-2 pb-2">
+                    <button type="button" class="btn btn-primary btn-block" onclick="clearFilter(true)">Reset Selection</button>
+                  </div>
+                </div>
+              </div>
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+                  new TomSelect("#select-node",{
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      }
+                  });
+              
+
+              
+                  // explicitly using onItemAdd and this function as we need to save multiple values
+                  let updateValueFilter = function() {
+                      return function () {
+                      filter['value'].push(arguments[0])
+                      }
+                  }
+
+                  let valueControl = new TomSelect("#select-value",{
+                      maxItems: null,
+                      valueField: 'id',
+                      labelField: 'title',
+                      searchField: 'title',
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: updateValueFilter()
+                  });
+
+                  let addValues = function() {
+                      return function () {
+                          // clear the current value options and add the selected attribute values
+                          // tom-select handles duplicates
+                          let selectedProperty = arguments[0];
+                          valueControl.clear();
+                          valueControl.clearOptions();
+                          filter['value'] = []
+                          if (filter['item'] === 'node') {
+                              for (let each in allNodes) {
+                                  valueControl.addOption({
+                                      id:allNodes[each][selectedProperty],
+                                      title:allNodes[each][selectedProperty]
+                                  })
+                              }
+                          }
+                          else if (filter['item'] === 'edge') {
+                              for (let each in allEdges) {
+                                  valueControl.addOption({
+                                      id:allEdges[each][selectedProperty],
+                                      title:allEdges[each][selectedProperty]
+                                  })
+                              }
+                          }
+                      }
+                  };
+
+                  let propControl = new TomSelect("#select-property",{
+                      valueField: 'id',
+                      labelField: 'title',
+                      searchField: 'title',
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: addValues()
+                  });
+
+                  let addProperties = function() {
+                      return function () {
+                          // loops through the selected network item and adds the attributes to dropdown
+                          // tom-select handles duplicates
+                          clearFilter(false)
+                          if (arguments[0] === 'edge') {
+                              for (let each in allEdges) {
+                                  if (allEdges.hasOwnProperty(each)) {
+                                      for (let eachProp in allEdges[each]) {
+                                          if (allEdges[each].hasOwnProperty(eachProp)) {
+                                              propControl.addOption({id: eachProp, title: eachProp})
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                          else if (arguments[0] === 'node') {
+                              for (let each in allNodes) {
+                                  if (allNodes.hasOwnProperty(each)) {
+                                      for (let eachProp in allNodes[each]) {
+                                          if (allNodes[each].hasOwnProperty(eachProp)
+                                              && (eachProp !== 'hidden' && eachProp !== 'savedLabel'
+                                                  && eachProp !== 'hiddenLabel')) {
+                                              propControl.addOption({id: eachProp, title: eachProp})
+
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  };
+
+                  let itemControl = new TomSelect("#select-item",{
+                      create: false,
+                      sortField:{
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: addProperties()
+                  });
+
+                  function clearFilter(reset) {
+                      // utility function to clear all the selected filter options
+                      // if reset is set to true, the existing filter will be removed
+                      // else, only the dropdown options are cleared
+                      propControl.clear();
+                      propControl.clearOptions();
+                      valueControl.clear();
+                      valueControl.clearOptions();
+                      filter = {
+                          item : '',
+                          property : '',
+                          value : []
+                      }
+                      if (reset) {
+                          itemControl.clear();
+                          filterHighlight({nodes: []})
+                      }
+                  }
+
+                  function updateFilter(value, key) {
+                      // key could be 'item' or 'property' and value is as selected in dropdown
+                      filter[key] = value
+                  }
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#4db6ac", "font": {"color": "white"}, "id": "Auto Fix Point", "label": "Auto Fix Point", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Car repair", "label": "Car repair", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "car wash", "label": "car wash", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "A.K Car Care", "label": "A.K Car Care", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Shivam Motors Repair and Service Center", "label": "Shivam Motors Repair and Service Center", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Bhawani Motors", "label": "Bhawani Motors", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Osho Car Service", "label": "Osho Car Service", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Shri Ram Auto Service Centre", "label": "Shri Ram Auto Service Centre", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Car Care Technologies", "label": "Car Care Technologies", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "AUTOWAYS Multi Car Workshop", "label": "AUTOWAYS Multi Car Workshop", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "GaadiMech - Officer Campus Jagatpura", "label": "GaadiMech - Officer Campus Jagatpura", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "auto detailing", "label": "auto detailing", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "AC repair (franchise)", "label": "AC repair (franchise)", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Kushi Auto Workshop", "label": "Kushi Auto Workshop", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Yash Auto Garage \u0026 Workshop", "label": "Yash Auto Garage \u0026 Workshop", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "parking", "label": "parking", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "garage", "label": "garage", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Karan Motor Garage", "label": "Karan Motor Garage", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Go Garage Jagatpura", "label": "Go Garage Jagatpura", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Two-wheeler repair", "label": "Two-wheeler repair", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "service", "label": "service", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Jaipur Motor Garage", "label": "Jaipur Motor Garage", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Shree Om Motors", "label": "Shree Om Motors", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "auto parts store", "label": "auto parts store", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "CARS CARE24 (Vaishali Nagar)", "label": "CARS CARE24 (Vaishali Nagar)", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Automatic car wash and repair", "label": "Automatic car wash and repair", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Shree Shyam Automobile", "label": "Shree Shyam Automobile", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Dev Automotives", "label": "Dev Automotives", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Car wash", "label": "Car wash", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "car repair", "label": "car repair", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "insurance agency", "label": "insurance agency", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "ATHARVA MOTORS CAR WORKSHOP", "label": "ATHARVA MOTORS CAR WORKSHOP", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "CARS CARE24 (Malviya Nagar)", "label": "CARS CARE24 (Malviya Nagar)", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "DS Motors", "label": "DS Motors", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "car dealer", "label": "car dealer", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Chiranji Auto Service", "label": "Chiranji Auto Service", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Dinesh Auto Service", "label": "Dinesh Auto Service", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Car", "label": "Car", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "bike repair", "label": "bike repair", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Auto Repair Services", "label": "Auto Repair Services", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "transportation service", "label": "transportation service", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Azad Car Repair Workshop", "label": "Azad Car Repair Workshop", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Sunil Motor Garage", "label": "Sunil Motor Garage", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "GoMechanic (Panch Batti)", "label": "GoMechanic (Panch Batti)", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "car repair (franchise)", "label": "car repair (franchise)", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Ghani Autos Since 1927", "label": "Ghani Autos Since 1927", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "GoMechanic (Link Road)", "label": "GoMechanic (Link Road)", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "car dealer (franchise)", "label": "car dealer (franchise)", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Shiv Kripa Automobiles", "label": "Shiv Kripa Automobiles", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "denting", "label": "denting", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "painting", "label": "painting", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "wash", "label": "wash", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Roadside Assist 24x7 Mechanic on the Way", "label": "Roadside Assist 24x7 Mechanic on the Way", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Roadside assistance", "label": "Roadside assistance", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "mobile mechanic", "label": "mobile mechanic", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Jaipur Car Care", "label": "Jaipur Car Care", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "The Car Shop", "label": "The Car Shop", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Car repair (luxury brand specialist)", "label": "Car repair (luxury brand specialist)", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Car Clinic", "label": "Car Clinic", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "RK Car Repairing", "label": "RK Car Repairing", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "GaadiMech - Vidhyadhar Nagar", "label": "GaadiMech - Vidhyadhar Nagar", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Go Garage Vidyadhar Nagar", "label": "Go Garage Vidyadhar Nagar", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Bike repair", "label": "Bike repair", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Raju Motors Garage", "label": "Raju Motors Garage", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Expert Auto", "label": "Expert Auto", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "tyres", "label": "tyres", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "battery", "label": "battery", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Rudranshhi Automobiles And Service Centre", "label": "Rudranshhi Automobiles And Service Centre", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Tire shop", "label": "Tire shop", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "auto parts", "label": "auto parts", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Shyam Motors", "label": "Shyam Motors", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Indian Car Service Centre", "label": "Indian Car Service Centre", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Jyoti Auto Mobile \u0026 Service Centre", "label": "Jyoti Auto Mobile \u0026 Service Centre", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Car repair (Toyota specialist)", "label": "Car repair (Toyota specialist)", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Shree Raghav Automotives", "label": "Shree Raghav Automotives", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Auto parts", "label": "Auto parts", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "The Bike Garage", "label": "The Bike Garage", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Bike repair (custom work)", "label": "Bike repair (custom work)", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "TotalEnergies Quartz Auto Services (Shree Shyam Automobile)", "label": "TotalEnergies Quartz Auto Services (Shree Shyam Automobile)", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "ShreeBalaji CarCare Workshop", "label": "ShreeBalaji CarCare Workshop", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "laundry", "label": "laundry", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "GaadiMech - Tonk Road", "label": "GaadiMech - Tonk Road", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Pink City Auto Cars", "label": "Pink City Auto Cars", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "CARS CARE24 (Tonk Road)", "label": "CARS CARE24 (Tonk Road)", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Go Garage Sitapura", "label": "Go Garage Sitapura", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Autolife Workshoppers Pvt Ltd", "label": "Autolife Workshoppers Pvt Ltd", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "Car repair (multi-brand", "label": "Car repair (multi-brand", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#e57373", "font": {"color": "white"}, "id": "German cars)", "label": "German cars)", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "MD Motors", "label": "MD Motors", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "chauffeur service", "label": "chauffeur service", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "GoMechanic - New Alpha Automobiles", "label": "GoMechanic - New Alpha Automobiles", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Hari Om Cars And Care", "label": "Hari Om Cars And Care", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Raj Motors", "label": "Raj Motors", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Car Repair Service", "label": "Car Repair Service", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "GoMechanic - Car Battery Shop", "label": "GoMechanic - Car Battery Shop", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#e57373", "font": {"color": "white"}, "id": "battery shop (franchise)", "label": "battery shop (franchise)", "shape": "dot", "size": 15, "title": "Concept: SERVICE"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Jabalpur", "label": "Jabalpur", "shape": "dot", "size": 20, "title": "Mechanic"}, {"color": "#4db6ac", "font": {"color": "white"}, "id": "Mr. Mechanic Car Workshop", "label": "Mr. Mechanic Car Workshop", "shape": "dot", "size": 20, "title": "Mechanic"}]);
+                  edges = new vis.DataSet([{"color": "#555555", "from": "Auto Fix Point", "to": "Car repair"}, {"color": "#555555", "from": "Auto Fix Point", "to": "car wash"}, {"color": "#555555", "from": "A.K Car Care", "to": "Car repair"}, {"color": "#555555", "from": "A.K Car Care", "to": "car wash"}, {"color": "#555555", "from": "Shivam Motors Repair and Service Center", "to": "Car repair"}, {"color": "#555555", "from": "Bhawani Motors", "to": "Car repair"}, {"color": "#555555", "from": "Osho Car Service", "to": "Car repair"}, {"color": "#555555", "from": "Osho Car Service", "to": "car wash"}, {"color": "#555555", "from": "Shri Ram Auto Service Centre", "to": "Car repair"}, {"color": "#555555", "from": "Car Care Technologies", "to": "Car repair"}, {"color": "#555555", "from": "Car Care Technologies", "to": "car wash"}, {"color": "#555555", "from": "AUTOWAYS Multi Car Workshop", "to": "Car repair"}, {"color": "#555555", "from": "GaadiMech - Officer Campus Jagatpura", "to": "Car repair"}, {"color": "#555555", "from": "GaadiMech - Officer Campus Jagatpura", "to": "auto detailing"}, {"color": "#555555", "from": "GaadiMech - Officer Campus Jagatpura", "to": "AC repair (franchise)"}, {"color": "#555555", "from": "Kushi Auto Workshop", "to": "Car repair"}, {"color": "#555555", "from": "Yash Auto Garage \u0026 Workshop", "to": "Car repair"}, {"color": "#555555", "from": "Yash Auto Garage \u0026 Workshop", "to": "parking"}, {"color": "#555555", "from": "Yash Auto Garage \u0026 Workshop", "to": "garage"}, {"color": "#555555", "from": "Karan Motor Garage", "to": "Car repair"}, {"color": "#555555", "from": "Go Garage Jagatpura", "to": "Two-wheeler repair"}, {"color": "#555555", "from": "Go Garage Jagatpura", "to": "service"}, {"color": "#555555", "from": "Jaipur Motor Garage", "to": "Car repair"}, {"color": "#555555", "from": "Shree Om Motors", "to": "Car repair"}, {"color": "#555555", "from": "Shree Om Motors", "to": "auto parts store"}, {"color": "#555555", "from": "CARS CARE24 (Vaishali Nagar)", "to": "Automatic car wash and repair"}, {"color": "#555555", "from": "Shree Shyam Automobile", "to": "Car repair"}, {"color": "#555555", "from": "Dev Automotives", "to": "Car wash"}, {"color": "#555555", "from": "Dev Automotives", "to": "car repair"}, {"color": "#555555", "from": "Dev Automotives", "to": "insurance agency"}, {"color": "#555555", "from": "ATHARVA MOTORS CAR WORKSHOP", "to": "Car repair"}, {"color": "#555555", "from": "CARS CARE24 (Malviya Nagar)", "to": "Car wash"}, {"color": "#555555", "from": "CARS CARE24 (Malviya Nagar)", "to": "car repair"}, {"color": "#555555", "from": "DS Motors", "to": "Car wash"}, {"color": "#555555", "from": "DS Motors", "to": "car repair"}, {"color": "#555555", "from": "DS Motors", "to": "car dealer"}, {"color": "#555555", "from": "Chiranji Auto Service", "to": "Car repair"}, {"color": "#555555", "from": "Dinesh Auto Service", "to": "Car"}, {"color": "#555555", "from": "Dinesh Auto Service", "to": "bike repair"}, {"color": "#555555", "from": "Auto Repair Services", "to": "Car repair"}, {"color": "#555555", "from": "Auto Repair Services", "to": "transportation service"}, {"color": "#555555", "from": "Azad Car Repair Workshop", "to": "Car wash"}, {"color": "#555555", "from": "Azad Car Repair Workshop", "to": "car repair"}, {"color": "#555555", "from": "Azad Car Repair Workshop", "to": "car dealer"}, {"color": "#555555", "from": "Sunil Motor Garage", "to": "Car repair"}, {"color": "#555555", "from": "GoMechanic (Panch Batti)", "to": "Car wash"}, {"color": "#555555", "from": "GoMechanic (Panch Batti)", "to": "car repair (franchise)"}, {"color": "#555555", "from": "Ghani Autos Since 1927", "to": "Car repair"}, {"color": "#555555", "from": "GoMechanic (Link Road)", "to": "Car wash"}, {"color": "#555555", "from": "GoMechanic (Link Road)", "to": "car repair"}, {"color": "#555555", "from": "GoMechanic (Link Road)", "to": "car dealer (franchise)"}, {"color": "#555555", "from": "Shiv Kripa Automobiles", "to": "Car repair"}, {"color": "#555555", "from": "Shiv Kripa Automobiles", "to": "denting"}, {"color": "#555555", "from": "Shiv Kripa Automobiles", "to": "painting"}, {"color": "#555555", "from": "Shiv Kripa Automobiles", "to": "wash"}, {"color": "#555555", "from": "Roadside Assist 24x7 Mechanic on the Way", "to": "Roadside assistance"}, {"color": "#555555", "from": "Roadside Assist 24x7 Mechanic on the Way", "to": "mobile mechanic"}, {"color": "#555555", "from": "Jaipur Car Care", "to": "Car repair"}, {"color": "#555555", "from": "The Car Shop", "to": "Car repair (luxury brand specialist)"}, {"color": "#555555", "from": "Car Clinic", "to": "Car repair"}, {"color": "#555555", "from": "RK Car Repairing", "to": "Car repair"}, {"color": "#555555", "from": "GaadiMech - Vidhyadhar Nagar", "to": "Car repair"}, {"color": "#555555", "from": "GaadiMech - Vidhyadhar Nagar", "to": "auto detailing"}, {"color": "#555555", "from": "GaadiMech - Vidhyadhar Nagar", "to": "AC repair (franchise)"}, {"color": "#555555", "from": "Go Garage Vidyadhar Nagar", "to": "service"}, {"color": "#555555", "from": "Go Garage Vidyadhar Nagar", "to": "Bike repair"}, {"color": "#555555", "from": "Raju Motors Garage", "to": "Car repair"}, {"color": "#555555", "from": "Raju Motors Garage", "to": "denting"}, {"color": "#555555", "from": "Raju Motors Garage", "to": "painting"}, {"color": "#555555", "from": "Raju Motors Garage", "to": "wash"}, {"color": "#555555", "from": "Expert Auto", "to": "Car repair"}, {"color": "#555555", "from": "Expert Auto", "to": "tyres"}, {"color": "#555555", "from": "Expert Auto", "to": "battery"}, {"color": "#555555", "from": "Rudranshhi Automobiles And Service Centre", "to": "car wash"}, {"color": "#555555", "from": "Rudranshhi Automobiles And Service Centre", "to": "car repair"}, {"color": "#555555", "from": "Rudranshhi Automobiles And Service Centre", "to": "Tire shop"}, {"color": "#555555", "from": "Rudranshhi Automobiles And Service Centre", "to": "auto parts"}, {"color": "#555555", "from": "Shyam Motors", "to": "Car repair"}, {"color": "#555555", "from": "Indian Car Service Centre", "to": "Car repair"}, {"color": "#555555", "from": "Jyoti Auto Mobile \u0026 Service Centre", "to": "Car repair (Toyota specialist)"}, {"color": "#555555", "from": "Shree Raghav Automotives", "to": "car repair"}, {"color": "#555555", "from": "Shree Raghav Automotives", "to": "car dealer"}, {"color": "#555555", "from": "Shree Raghav Automotives", "to": "Auto parts"}, {"color": "#555555", "from": "The Bike Garage", "to": "Bike repair (custom work)"}, {"color": "#555555", "from": "TotalEnergies Quartz Auto Services (Shree Shyam Automobile)", "to": "Car repair"}, {"color": "#555555", "from": "TotalEnergies Quartz Auto Services (Shree Shyam Automobile)", "to": "parking"}, {"color": "#555555", "from": "ShreeBalaji CarCare Workshop", "to": "Car repair"}, {"color": "#555555", "from": "ShreeBalaji CarCare Workshop", "to": "laundry"}, {"color": "#555555", "from": "GaadiMech - Tonk Road", "to": "Car repair"}, {"color": "#555555", "from": "GaadiMech - Tonk Road", "to": "auto detailing"}, {"color": "#555555", "from": "GaadiMech - Tonk Road", "to": "AC repair (franchise)"}, {"color": "#555555", "from": "Pink City Auto Cars", "to": "Car repair"}, {"color": "#555555", "from": "CARS CARE24 (Tonk Road)", "to": "Automatic car wash and repair"}, {"color": "#555555", "from": "Go Garage Sitapura", "to": "Car repair"}, {"color": "#555555", "from": "Autolife Workshoppers Pvt Ltd", "to": "Car repair (multi-brand"}, {"color": "#555555", "from": "Autolife Workshoppers Pvt Ltd", "to": "German cars)"}, {"color": "#555555", "from": "MD Motors", "to": "Car repair"}, {"color": "#555555", "from": "MD Motors", "to": "chauffeur service"}, {"color": "#555555", "from": "GoMechanic - New Alpha Automobiles", "to": "Car wash"}, {"color": "#555555", "from": "GoMechanic - New Alpha Automobiles", "to": "car repair (franchise)"}, {"color": "#555555", "from": "Hari Om Cars And Care", "to": "Car repair"}, {"color": "#555555", "from": "Raj Motors", "to": "Car repair"}, {"color": "#555555", "from": "Car Repair Service", "to": "Car repair"}, {"color": "#555555", "from": "GoMechanic - Car Battery Shop", "to": "car repair"}, {"color": "#555555", "from": "GoMechanic - Car Battery Shop", "to": "Auto parts"}, {"color": "#555555", "from": "GoMechanic - Car Battery Shop", "to": "battery shop (franchise)"}, {"color": "#555555", "from": "Jabalpur", "to": "Car repair"}, {"color": "#555555", "from": "Mr. Mechanic Car Workshop", "to": "Car repair"}, {"color": "#555555", "from": "Mr. Mechanic Car Workshop", "to": "car wash"}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "forceAtlas2Based": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.01,
+            "damping": 0.4,
+            "gravitationalConstant": -50,
+            "springConstant": 0.08,
+            "springLength": 100
+        },
+        "solver": "forceAtlas2Based",
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+                    network.on("selectNode", neighbourhoodHighlight);
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
