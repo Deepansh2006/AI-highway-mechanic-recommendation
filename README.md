@@ -80,7 +80,7 @@ Now we need to populate the database with mock mechanics and run the AI Concept 
 Run these two commands:
 ```bash
 # 1. Populate Mechanics
-python app/db/seed.py
+python app/db/seed_data.py
 
 # 2. Run AI Enrichment (Takes ~2 minutes to infer skills via Gemini)
 python app/db/enrich_concepts.py
