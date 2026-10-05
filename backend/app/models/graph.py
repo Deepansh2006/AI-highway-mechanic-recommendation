@@ -32,7 +32,7 @@ class MechanicNode(Base):
     # PostGIS spatial column for exact location
     location = Column(Geography(geometry_type='POINT', srid=4326), nullable=False)
     
-    # Keeping raw lat/long for easy JSON serialization in Gradio API
+    # Raw lat/long for JSON serialization
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     
@@ -40,6 +40,12 @@ class MechanicNode(Base):
     is_active_job = Column(Boolean, default=False)
     base_rating = Column(Float, default=4.50)
     total_reviews = Column(Integer, default=0)
+    owner_name = Column(String(255), nullable=True)
+    vehicle_label = Column(String(100), nullable=True, default="Service vehicle")
+    vehicle_plate = Column(String(20), nullable=True)
+    verified = Column(Boolean, default=True)
+    area = Column(String(255), nullable=True, default="Jaipur")
+    typical_arrival_min = Column(Integer, default=15)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Edges: A mechanic has multiple Concepts (tools/skills)

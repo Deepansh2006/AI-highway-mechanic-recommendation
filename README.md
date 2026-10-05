@@ -8,44 +8,30 @@ An AI-driven roadside assistance recommendation engine powered by **Google Gemin
 - Docker Desktop (for PostgreSQL with PostGIS & pgvector)
 - Python 3.10+
 - A Google Gemini API Key
+- Node.js 20+ (for the Next.js frontend)
 
 ---
 
-## 🚀 Setup Guide (Start From Scratch)
+## 🚀 Setup Guide
 
-Follow these exact steps to run the complete backend API and Gradio User Interface on a fresh machine.
-
-### Step 1: Clone the Repository
-Clone this repository to your local machine and open a terminal inside the project root folder (`final year`).
+### Step 1: Clone & Navigate
+Clone this repository and open a terminal inside the project root folder.
 
 ---
 
 ### Step 2: Start the Database Container
-We need a PostgreSQL database with both **pgvector** and **PostGIS** installed. Run these commands sequentially:
-
-1. Spin up the container:
 ```bash
 docker run --name smart-breakdown-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d ankane/pgvector:latest
-```
-
-2. Install the PostGIS extension into the container:
-```bash
 docker exec -it smart-breakdown-db bash
 apt-get update
 apt-get install -y postgresql-15-postgis-3
 exit
-```
-
-3. Enable the extensions inside Postgres:
-```bash
 docker exec smart-breakdown-db psql -U postgres -d postgres -c "CREATE EXTENSION IF NOT EXISTS postgis; CREATE EXTENSION IF NOT EXISTS vector;"
 ```
 
 ---
 
-### Step 3: Setup the Python Environment
-Navigate into the `backend` folder and create a virtual environment to install dependencies.
-
+### Step 3: Setup Python Environment
 ```bash
 cd backend
 python -m venv venv
@@ -58,16 +44,13 @@ source venv/bin/activate
 
 # Install all required packages
 pip install -r requirements.txt
-pip install gradio requests
 ```
 
 ---
 
 ### Step 4: Configure API Keys
-Create a file named `.env` inside the `backend` folder and add the following lines. Replace `<YOUR_GEMINI_API_KEY>` with your actual Gemini API key.
-
+Create/edit `backend/.env`:
 ```ini
-# backend/.env
 SQLALCHEMY_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
 GEMINI_API_KEY="<YOUR_GEMINI_API_KEY>"
 ```
@@ -75,37 +58,72 @@ GEMINI_API_KEY="<YOUR_GEMINI_API_KEY>"
 ---
 
 ### Step 5: Seed the Database
-Now we need to populate the database with mock mechanics and run the AI Concept Enrichment script to link their capabilities.
-
-Run these two commands:
 ```bash
-# 1. Populate Mechanics
 python app/db/seed_data.py
-
-# 2. Run AI Enrichment (Takes ~2 minutes to infer skills via Gemini)
 python app/db/enrich_concepts.py
+```
+
+### Step 5b: Run Migration (if upgrading from v1)
+If you already have data and just updated the code:
+```bash
+python -m app.db.migrate
 ```
 
 ---
 
 ### Step 6: Start the Backend API
-The GraphRAG recommendation engine is powered by FastAPI. Run the server:
-
 ```bash
 uvicorn app.main:app --reload
 ```
-*Wait ~10 seconds for the sentence-transformer embeddings model to load into memory. You should see `Application startup complete.`*
+*Wait ~10 seconds for the sentence-transformer model to load. You should see `Application startup complete.`*
+
+The API is now running at **http://127.0.0.1:8000**. Visit **http://127.0.0.1:8000/docs** for Swagger UI.
 
 ---
 
-### Step 7: Start the Gradio User Interface
-Open a **new, separate terminal** (keep the FastAPI server running), navigate to the `backend` folder, activate the virtual environment again, and run the UI:
-
+### Step 7: Start the Next.js Frontend
 ```bash
-cd backend
-venv\Scripts\activate
-python gradio_app.py
+cd smart-breakdown-frontend (1)/smart-breakdown-frontend (1)/frontend
+npm install
 ```
 
-The terminal will provide a local URL: **http://127.0.0.1:7860**. 
-Open that link in your browser to interact with the AI Engine!
+Edit `.env.local` to point to your backend:
+```ini
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+```bash
+npm run dev
+```
+Open **http://localhost:3000** in your browser.
+
+---
+
+## 📡 API Endpoints
+
+### Frontend API (used by Next.js)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/recommendations` | AI diagnosis + mechanic ranking |
+| POST | `/api/requests` | Create dispatch request |
+| GET | `/api/requests/{id}` | Poll request status |
+| POST | `/api/requests/{id}/cancel` | Cancel request |
+| POST | `/api/requests/{id}/confirm-mechanic` | Driver confirms identity |
+| POST | `/api/requests/{id}/confirm-payment` | Driver confirms payment |
+| POST | `/api/requests/{id}/accept` | Mechanic accepts |
+| POST | `/api/requests/{id}/decline` | Mechanic declines |
+| POST | `/api/requests/{id}/arrive` | Mechanic arrived |
+| POST | `/api/requests/{id}/verify` | Verify 4-digit code |
+| POST | `/api/requests/{id}/bill` | Send bill |
+| GET | `/api/mechanics/{id}/dashboard` | Mechanic dashboard |
+| POST | `/api/mechanics/{id}/availability` | Online/offline toggle |
+| POST | `/api/mechanics/{id}/services` | Toggle services |
+| GET | `/api/admin/overview` | Control room dashboard |
+
+### Legacy V1 API (backward compatible)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/recommendations/search` | Original search endpoint |
+| POST | `/api/v1/dispatch/request` | Original dispatch |
+| POST | `/api/v1/dispatch/{id}/respond` | Original mechanic response |
+| GET | `/api/v1/dispatch/{id}` | Original status check |
