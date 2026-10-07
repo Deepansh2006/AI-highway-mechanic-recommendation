@@ -7,7 +7,7 @@
 import { mockApi } from "./mock/api";
 import type {
   AdminOverview, CreateRequestInput, FeedbackInput, GeoPoint, LineItem, MechanicDashboard, OtpChallenge,
-  PastRequest, RecommendInput, RecommendResult, Role, ServiceRequest, Session, SosAlert,
+  MechanicRegisterInput, MechanicRegisterResult, PastRequest, RecommendInput, RecommendResult, Role, ServiceRequest, Session, SosAlert,
 } from "./types";
 
 import { ApiError } from "./errors";
@@ -44,6 +44,7 @@ export interface Api {
   approveVerification(id: string): Promise<void>;
   requestDocument(id: string, document: string): Promise<void>;
   // Auth
+  registerMechanic(input: MechanicRegisterInput): Promise<MechanicRegisterResult>;
   sendOtp(input: { role: Role; phone?: string; email?: string; password?: string }): Promise<OtpChallenge>;
   verifyOtp(challengeId: string, code: string): Promise<Session>;
 }
@@ -98,6 +99,7 @@ const httpApi: Api = {
   assignIncident: (id) => http("POST", `/api/admin/incidents/${id}/assign`),
   approveVerification: (id) => http("POST", `/api/admin/verifications/${id}/approve`),
   requestDocument: (id, document) => http("POST", `/api/admin/verifications/${id}/request-document`, { document }),
+  registerMechanic: (input) => http("POST", "/api/mechanics/register", input),
   sendOtp: (i) => http("POST", "/api/auth/otp/send", i),
   verifyOtp: (challenge_id, code) => http("POST", "/api/auth/otp/verify", { challenge_id, code }),
 };

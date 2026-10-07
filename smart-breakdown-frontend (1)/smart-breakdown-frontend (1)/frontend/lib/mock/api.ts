@@ -14,7 +14,7 @@ import { DEMO_POSITION, describePoint, lerp } from "../geo";
 import { ACCEPT_WINDOW_S, issueLabel, vehicleLabel } from "../labels";
 import type {
   AdminOverview, FeedbackInput, GeoPoint, Incident, Issue, MechanicDashboard, PastRequest, Recommendation,
-  ServiceRequest, SosAlert, Verification,
+  MechanicRegisterInput, MechanicRegisterResult, ServiceRequest, SosAlert, Verification,
 } from "../types";
 import { HOTSPOTS, MECHANICS, ONLINE_MECHANIC_POINTS, REVIEWS, SEED_INCIDENTS, SEED_VERIFICATIONS } from "./data";
 import { defaultBill, diagnose, mechanicById, recommend } from "./engine";
@@ -556,6 +556,13 @@ export const mockApi: Api = {
       const v = s.verifications.find((x) => x.id === id);
       if (v) v.status = "missing_docs";
     });
+  },
+
+  async registerMechanic(input: MechanicRegisterInput): Promise<MechanicRegisterResult> {
+    await wait();
+    if (!input.business_name.trim()) throw new ApiError("Enter your workshop name.");
+    if (input.phone_number.replace(/\D/g, "").length !== 10) throw new ApiError("Enter a 10-digit mobile number.");
+    return { status: "ok", mechanic_id: `demo-${Math.random().toString(36).slice(2)}` };
   },
 
   async sendOtp(input) {

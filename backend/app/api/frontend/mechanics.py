@@ -8,18 +8,21 @@ POST   /api/mechanics/{id}/services    — Toggle service offerings
 import json
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException
+from geoalchemy2.elements import WKTElement
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy import func as sqlfunc
 
 from app.core.database import get_db
-from app.models.graph import MechanicNode
+from app.models.graph import MechanicNode, ConceptNode
 from app.models.dispatch import ServiceRequest, RequestStatus
 from app.schemas.frontend import (
     MechanicDashboardResponse, MechanicProfile, TodayStats, WeekDay,
     WeekSummary, NearbyRequest, ServiceOffering, Review,
     ServiceRequestResponse, AvailabilityInput, ServiceToggleInput,
-    GeoPoint, Diagnosis, LineItem,
+    GeoPoint, Diagnosis, LineItem, MechanicRegisterInput,
 )
+from app.services.rag_ranker import embedding_model
 
 router = APIRouter()
 
@@ -296,11 +299,70 @@ def set_service(mechanic_id: str, body: ServiceToggleInput, db: Session = Depend
     return {"status": "ok"}
 
 @router.post("/register")
-def register_mechanic(body: dict, db: Session = Depends(get_db)):
-    """
-    Stub for Mechanic Registration.
-    The backend person working on auth should implement this to create
-    a new MechanicNode in the database with the given details, including
-    owner_name, vehicle_plate, area, etc. so they appear in recommendations.
-    """
-    return {"message": "Mechanic registration will be handled by the auth module."}
+def register_mechanic(body: MechanicRegisterInput, db: Session = Depends(get_db)):
+    """Create a mechanic profile and link its service capabilities."""
+    existing = db.query(MechanicNode).filter(
+        MechanicNode.phone_number == body.phone_number
+    ).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="A mechanic is already registered with this phone number.")
+
+    mechanic = MechanicNode(
+        business_name=body.business_name,
+        phone_number=body.phone_number,
+        latitude=body.latitude,
+        longitude=body.longitude,
+        location=WKTElement(
+            f"POINT({body.longitude} {body.latitude})",
+            srid=4326,
+        ),
+        owner_name=body.owner_name,
+        vehicle_label=body.vehicle_label,
+        vehicle_plate=body.vehicle_plate,
+        area=body.area,
+    )
+
+    seen_capabilities = set()
+    try:
+        for capability_name in body.capabilities:
+            capability_name = capability_name.strip()
+            if not capability_name or capability_name in seen_capabilities:
+                continue
+            seen_capabilities.add(capability_name)
+
+            capability = db.query(ConceptNode).filter(
+                ConceptNode.name == capability_name
+            ).first()
+            if capability is None:
+                embedding = (
+                    embedding_model.encode(capability_name).tolist()
+                    if embedding_model is not None
+                    else [0.0] * 384
+                )
+                capability = ConceptNode(
+                    name=capability_name,
+                    category="SERVICE",
+                    embedding=embedding,
+                )
+                db.add(capability)
+                db.flush()
+            elif capability.embedding is None:
+                capability.embedding = (
+                    embedding_model.encode(capability_name).tolist()
+                    if embedding_model is not None
+                    else [0.0] * 384
+                )
+
+            mechanic.capabilities.append(capability)
+
+        db.add(mechanic)
+        db.commit()
+        db.refresh(mechanic)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="The mechanic could not be registered because matching details already exist.",
+        )
+
+    return {"status": "ok", "mechanic_id": str(mechanic.id)}

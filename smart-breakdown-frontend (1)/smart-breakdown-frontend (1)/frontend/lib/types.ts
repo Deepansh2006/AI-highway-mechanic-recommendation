@@ -248,3 +248,20 @@ export interface Session {
   mechanic_id?: string;
   token: string;
 }
+
+export interface MechanicRegisterInput {
+  business_name: string;
+  phone_number: string;
+  latitude: number;
+  longitude: number;
+  owner_name?: string;
+  vehicle_label?: string;
+  vehicle_plate?: string;
+  area?: string;
+  capabilities?: string[];
+}
+
+export interface MechanicRegisterResult {
+  status: string;
+  mechanic_id: string;
+}

@@ -1,8 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# Default credentials for our local docker container
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:5433/postgres"
+from app.core.config import settings
+
+SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
 # Create the SQLAlchemy Engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)

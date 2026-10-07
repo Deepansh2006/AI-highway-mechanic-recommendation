@@ -83,6 +83,25 @@ The driver screen polls this every 3 s. The backend owns these state changes:
 
 ## Mechanic
 
+### `POST /api/mechanics/register`
+Register a mechanic profile using the same snake_case field names as the backend:
+```json
+{
+  "business_name": "Sharma Auto Works",
+  "phone_number": "9876543210",
+  "latitude": 26.9124,
+  "longitude": 75.7873,
+  "owner_name": "Ramesh Sharma",
+  "vehicle_label": "Mobile van",
+  "vehicle_plate": "RJ14 GC 4471",
+  "area": "Jaipur",
+  "capabilities": ["tyre repair", "battery"]
+}
+```
+- `business_name`, `phone_number`, `latitude`, and `longitude` are required.
+- `owner_name`, `vehicle_label`, `vehicle_plate`, `area`, and `capabilities` are optional. `owner_name` and `vehicle_plate` default to `null`; `vehicle_label`, `area`, and `capabilities` default to `"Service vehicle"`, `"Jaipur"`, and `[]`.
+- Response: `{ "status": "ok", "mechanic_id": "..." }`. A phone number already registered returns `409`.
+
 ### `GET /api/mechanics/{mechanic_id}/dashboard` → `MechanicDashboard`
 Polled every 2.5 s. Contains:
 
@@ -127,7 +146,7 @@ Polled every 2.5 s. Contains:
 ## Sign in
 - `POST /api/auth/otp/send` → `OtpChallenge`
   - Request body: `{ "role": "driver"|"mechanic"|"admin", "phone"?, "email"?, "password"? }`
-  - Response: `{ "challenge_id", "sent_to", "expires_in_s" }`. Omit `demo_code` in production.
+  - Response: `{ "challenge_id", "sent_to", "expires_in_s", "demo_code"? }`. When demo mode is enabled, the frontend displays `demo_code` in a sign-in popup; omit it in production.
 - `POST /api/auth/otp/verify` with `{ "challenge_id", "code" }` → `Session`
   - Response: `{ "role", "name", "mechanic_id"?, "token" }`
   - Wrong code: `422` with a detail message such as "That code didn't match. 2 attempts left."

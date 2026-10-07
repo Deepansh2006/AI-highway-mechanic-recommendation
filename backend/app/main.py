@@ -8,6 +8,8 @@ from app.api.frontend import admin as fe_admin
 from app.core.database import engine
 from app.models.graph import Base
 from app.models import graph, dispatch as dispatch_models
+from app.api.frontend import feedback as fe_feedback
+from app.api.frontend import auth as fe_auth
 
 # Ensure tables exist (will create new ones like ServiceRequest if missing)
 Base.metadata.create_all(bind=engine)
@@ -39,6 +41,9 @@ app.include_router(fe_recommendations.router, prefix="/api/recommendations", tag
 app.include_router(fe_requests.router, prefix="/api/requests", tags=["Requests"])
 app.include_router(fe_mechanics.router, prefix="/api/mechanics", tags=["Mechanics"])
 app.include_router(fe_admin.router, prefix="/api/admin", tags=["Admin – Control Room"])
+app.include_router(fe_feedback.router, prefix="/api/feedback", tags=["Feedback"])
+app.include_router(fe_feedback.requests_router, prefix="/api/requests", tags=["Requests"])
+app.include_router(fe_auth.router, prefix="/api/auth", tags=["Auth"])
 
 @app.get("/")
 def read_root():
