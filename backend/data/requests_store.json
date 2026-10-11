@@ -1,0 +1,109 @@
+{
+  "9c45ce56-92ef-4612-9319-0d82694497f1": {
+    "id": "9c45ce56-92ef-4612-9319-0d82694497f1",
+    "status": "pending",
+    "vehicle": "Hatchback",
+    "issue": "cooling_system",
+    "description": "Overheating radiator",
+    "location": {
+      "lat": 26.8745,
+      "lng": 75.7546,
+      "label": "Near 200 Feet Bypass",
+      "accuracy_m": null
+    },
+    "diagnosis": {
+      "issue": "cooling_system",
+      "title": "Likely an engine overheating issue",
+      "confidence": "High",
+      "service": "Engine cooling system repair",
+      "body": "It sounds like your engine is overheating, which means the cooling system isn't working effectively to dissipate heat. This can be caused by low coolant, a faulty radiator, or other cooling system components. For your safety and to prevent further damage, please pull over immediately, turn off your engine, and allow it to cool down completely. While waiting, you can safely check the coolant level in the overflow reservoir (do NOT open the hot radiator cap) to see if it's low.",
+      "mechanic_tip": "Upon arrival, check for visible leaks, fan operation, and coolant levels. Be extremely cautious of hot steam and pressurized coolant when inspecting the radiator and hoses. A pressure test of the cooling system will be crucial."
+    },
+    "mechanic_id": "mech-9829600189",
+    "mechanic_name": "Deepansh Auto Services",
+    "mechanic_owner": "Deepansh",
+    "mechanic_initials": "DA",
+    "mechanic_rating": 5.0,
+    "mechanic_vehicle_label": "Mobile Van",
+    "mechanic_plate": "RJ14 AB 1234",
+    "mechanic_phone": "9829600189",
+    "mechanic_location": {
+      "lat": 26.8745,
+      "lng": 75.7546
+    },
+    "reassigned": false,
+    "previous_mechanic_name": null,
+    "created_at": 1791716998739,
+    "accept_deadline": 1791717088739,
+    "accepted_at": null,
+    "arrived_at": null,
+    "completed_at": null,
+    "verification_code": "3575",
+    "distance_km": 0.0,
+    "eta_min": 5,
+    "price_min": 300,
+    "price_max": 800,
+    "line_items": [],
+    "final_amount": null,
+    "payment_method": null,
+    "driver_name": "Driver",
+    "driver_vehicle_model": "Hatchback",
+    "driver_plate": ""
+  },
+  "a7d7c3ef-c0d7-4f7a-b198-3e10f3b0e120": {
+    "id": "a7d7c3ef-c0d7-4f7a-b198-3e10f3b0e120",
+    "status": "completed",
+    "vehicle": "Hatchback",
+    "issue": "cooling_system",
+    "description": "Overheating radiator",
+    "location": {
+      "lat": 26.8745,
+      "lng": 75.7546,
+      "label": "Near 200 Feet Bypass",
+      "accuracy_m": null
+    },
+    "diagnosis": {
+      "issue": "cooling_system",
+      "title": "Likely an engine overheating issue",
+      "confidence": "High",
+      "service": "Engine cooling system repair / check",
+      "body": "It sounds like your engine is overheating, which means the cooling system isn't working effectively to dissipate heat. This can be caused by low coolant, a faulty thermostat, a leak in the radiator or hoses, or a problem with the cooling fan. To prevent further damage, please turn off your engine immediately and allow it to cool down. While waiting, you can safely check for any visible coolant leaks under the car, but do not attempt to open the radiator cap or coolant reservoir while the engine is hot, as pressurized hot fluid can cause severe burns.",
+      "mechanic_tip": "Upon arrival, check coolant levels, inspect radiator hoses for leaks or blockages, test the radiator cap, and verify the cooling fan's operation. Be prepared to pressure test the system and check for thermostat functionality. Bring extra coolant and a variety of hose clamps."
+    },
+    "mechanic_id": "mech-9829600189",
+    "mechanic_name": "Deepansh Auto Services",
+    "mechanic_owner": "Deepansh",
+    "mechanic_initials": "DA",
+    "mechanic_rating": 5.0,
+    "mechanic_vehicle_label": "Mobile Van",
+    "mechanic_plate": "RJ14 AB 1234",
+    "mechanic_phone": "9829600189",
+    "mechanic_location": {
+      "lat": 26.8745,
+      "lng": 75.7546
+    },
+    "reassigned": false,
+    "previous_mechanic_name": null,
+    "created_at": 1791717779622,
+    "accept_deadline": 1791717869622,
+    "accepted_at": 1791717779783,
+    "arrived_at": 1791717779866,
+    "completed_at": 1791717780093,
+    "verification_code": "3326",
+    "distance_km": 0.0,
+    "eta_min": 0,
+    "price_min": 300,
+    "price_max": 800,
+    "line_items": [
+      {
+        "label": "Coolant flush & radiator hose",
+        "amount": 450.0
+      }
+    ],
+    "final_amount": 450.0,
+    "payment_method": "upi",
+    "driver_name": "Driver",
+    "driver_vehicle_model": "Hatchback",
+    "driver_plate": ""
+  }
+}

@@ -31,9 +31,9 @@ class Settings:
                 if k and k not in keys:
                     keys.append(k)
 
-        # Check numbered keys GEMINI_API_KEY_1 through GEMINI_API_KEY_20
+        # Check numbered keys GEMINI_API_KEY_1 or GEMINI_API_KEY1 through 20
         for i in range(1, 21):
-            k = os.getenv(f"GEMINI_API_KEY_{i}", "").strip().strip("'\"")
+            k = (os.getenv(f"GEMINI_API_KEY_{i}") or os.getenv(f"GEMINI_API_KEY{i}") or "").strip().strip("'\"")
             if k and k not in keys:
                 keys.append(k)
 
