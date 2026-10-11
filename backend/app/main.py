@@ -1,3 +1,5 @@
+import os
+from sqlalchemy import text
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.endpoints import recommend, dispatch
@@ -11,6 +13,15 @@ from app.models import graph, dispatch as dispatch_models
 from app.api.frontend import feedback as fe_feedback
 from app.api.frontend import auth as fe_auth
 
+# Attempt to create required extensions (postgis, pgvector) if available
+try:
+    with engine.connect() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        conn.commit()
+except Exception as e:
+    print(f"[Database Notice] Extension check: {e}")
+
 # Ensure tables exist (will create new ones like ServiceRequest if missing)
 Base.metadata.create_all(bind=engine)
 app = FastAPI(
@@ -19,14 +30,20 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# CORS configuration to allow Next.js frontend to talk to us
+# CORS configuration to allow local dev + Vercel frontend deployments
+allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost",
+]
+frontend_url = os.getenv("FRONTEND_URL", "").strip()
+if frontend_url and frontend_url not in allowed_origins:
+    allowed_origins.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost",
-    ],
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

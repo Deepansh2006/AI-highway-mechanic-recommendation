@@ -285,7 +285,7 @@ export default function LoginPage() {
                   style={{ height: 64, fontSize: 30, letterSpacing: "0.5em", textAlign: "center", border: `2px solid ${error ? "#B54708" : "var(--navy)"}`, background: error ? "#FFF8F0" : "#fff" }}
                   aria-invalid={!!error} aria-describedby={error ? "otp-err" : undefined} autoFocus />
                 {error && <span id="otp-err" className="error-text" role="alert"><Icon name="info" size={18} />{error}</span>}
-                <button type="submit" className="btn btn-primary btn-lg" disabled={busy || code.length !== 6}>{busy ? <Spinner /> : "Verify & Sign in"}</button>
+                <button type="submit" className="btn btn-primary btn-lg" disabled={busy || (code.length !== 4 && code.length !== 6)}>{busy ? <Spinner /> : "Verify & Sign in"}</button>
                 {role !== "admin" && (
                   <div className="row wrap between g8 small">
                     {resendIn > 0 ? <span className="muted">Resend code in <b style={{ color: "var(--navy)" }}>0:{String(resendIn).padStart(2, "0")}</b></span>

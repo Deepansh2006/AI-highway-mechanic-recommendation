@@ -3,6 +3,7 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 from app.core.config import settings
+from app.core.gemini_pool import gemini_pool
 from typing import List, Optional
 
 # ---------- Pydantic Schema for Gemini Structured Output ----------
@@ -171,7 +172,7 @@ def parse_breakdown_issue(raw_text: str, issue_hint: Optional[str] = None) -> di
         issue_hint: Optional frontend issue type (flat/battery/heat/start/fuel/tow/other)
                     to help the AI produce more accurate results.
     """
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "your_gemini_api_key_here":
+    if not gemini_pool.has_keys:
         # Fallback: use rule-based diagnosis when no API key
         key = issue_hint if issue_hint and issue_hint in _FALLBACK_RULES else "other"
         fallback = dict(_FALLBACK_RULES[key])
@@ -179,8 +180,6 @@ def parse_breakdown_issue(raw_text: str, issue_hint: Optional[str] = None) -> di
             fallback["extracted_keywords"] = [raw_text]
         fallback["fallback_used"] = True
         return fallback
-
-    client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
     issue_context = ""
     if issue_hint and issue_hint != "other":
@@ -205,7 +204,7 @@ def parse_breakdown_issue(raw_text: str, issue_hint: Optional[str] = None) -> di
     """
 
     try:
-        response = client.models.generate_content(
+        response = gemini_pool.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(

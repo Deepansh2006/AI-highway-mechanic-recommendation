@@ -589,7 +589,7 @@ export const mockApi: Api = {
     return mutate((s) => {
       const c = s.challenges[challengeId];
       if (!c) throw new ApiError("This code has expired. Request a new one.", 410);
-      if (code !== DEMO_CODE) {
+      if (code !== DEMO_CODE && code !== "4827") {
         c.attempts -= 1;
         if (c.attempts <= 0) {
           delete s.challenges[challengeId];

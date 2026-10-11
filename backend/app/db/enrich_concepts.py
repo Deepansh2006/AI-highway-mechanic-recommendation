@@ -18,12 +18,11 @@ from google.genai import types
 from sentence_transformers import SentenceTransformer
 from app.core.database import SessionLocal
 from app.core.config import settings
+from app.core.gemini_pool import gemini_pool
 from app.models.graph import MechanicNode, ConceptNode
 
 print("Loading Embedding Model...")
 embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-
-client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 
 def enrich_concepts():
@@ -75,8 +74,8 @@ Return ONLY a JSON array. Each element: {{"business_name": "...", "inferred_skil
 Mechanics:
 {json.dumps(batch, indent=2)}
 """
-        response = client.models.generate_content(
-            model='gemini-3.8-flash',
+        response = gemini_pool.generate_content(
+            model='gemini-2.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",

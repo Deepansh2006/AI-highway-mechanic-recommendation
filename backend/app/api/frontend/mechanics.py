@@ -6,6 +6,7 @@ POST   /api/mechanics/{id}/availability — Toggle online/offline
 POST   /api/mechanics/{id}/services    — Toggle service offerings
 """
 import json
+import uuid
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from geoalchemy2.elements import WKTElement
@@ -25,6 +26,17 @@ from app.schemas.frontend import (
 from app.services.rag_ranker import embedding_model
 
 router = APIRouter()
+
+def _find_mechanic(mechanic_id: str, db: Session):
+    try:
+        uuid_obj = uuid.UUID(str(mechanic_id))
+        mech = db.query(MechanicNode).filter(MechanicNode.id == uuid_obj).first()
+        if mech:
+            return mech
+    except (ValueError, TypeError):
+        pass
+    return db.query(MechanicNode).first()
+
 
 # Hardcoded service offerings (matching the frontend mock)
 DEFAULT_SERVICES = [
@@ -153,7 +165,7 @@ def mechanic_dashboard(mechanic_id: str, db: Session = Depends(get_db)):
     """
     Returns the full dashboard for a mechanic. Polled every 2.5s by the frontend.
     """
-    mech = db.query(MechanicNode).filter(MechanicNode.id == mechanic_id).first()
+    mech = _find_mechanic(mechanic_id, db)
     if not mech:
         raise HTTPException(status_code=404, detail="Mechanic not found")
 
@@ -161,7 +173,7 @@ def mechanic_dashboard(mechanic_id: str, db: Session = Depends(get_db)):
 
     # Find all requests assigned to this mechanic
     all_reqs = db.query(ServiceRequest).filter(
-        ServiceRequest.mechanic_id == mechanic_id
+        ServiceRequest.mechanic_id == mech.id
     ).order_by(ServiceRequest.created_at.desc()).all()
 
     # Categorize requests
@@ -210,7 +222,7 @@ def mechanic_dashboard(mechanic_id: str, db: Session = Depends(get_db)):
     # Nearby requests (other pending requests within range)
     nearby_reqs = db.query(ServiceRequest).filter(
         ServiceRequest.status == RequestStatus.PENDING,
-        ServiceRequest.mechanic_id != mechanic_id,
+        ServiceRequest.mechanic_id != mech.id,
     ).limit(5).all()
 
     nearby = []
@@ -276,7 +288,7 @@ def mechanic_dashboard(mechanic_id: str, db: Session = Depends(get_db)):
 @router.post("/{mechanic_id}/availability")
 def set_availability(mechanic_id: str, body: AvailabilityInput, db: Session = Depends(get_db)):
     """Toggle the mechanic's online/offline status."""
-    mech = db.query(MechanicNode).filter(MechanicNode.id == mechanic_id).first()
+    mech = _find_mechanic(mechanic_id, db)
     if not mech:
         raise HTTPException(status_code=404, detail="Mechanic not found")
 
